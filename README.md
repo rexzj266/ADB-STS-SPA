@@ -1,3 +1,5 @@
+# Using STS+SPA to ensure the SQL compatibility and performance when ADB upgrade
+
 ## Background
 
 Lots of customers choose to use Oracle Autonomous Database in their production environments. But because the ADB (Autonomous Database) is a managed environment, the database will be patched or upgraded according to Oracle's plan. Although there are notifications in advance to help the customers to make their own plans to get over the upgrade. Some customers still have concerns about the performance or compatibility of the SQL statements after the upgrade. 
