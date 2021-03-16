@@ -426,7 +426,7 @@ WHERE  NAME = 'mysh_sts_test';
 
 ## Supplement
 
-In the example above we did not do much filter against the SQL statements. If we want to filter out a specific type of SQL statements, for example `SELECT`, we can do it like below.
+In the example above we did not do many filters against the SQL statements. If we want to filter out a specific type of SQL statement, for example, `SELECT`, we can do it like below.
 
 ```sql
 DECLARE
