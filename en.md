@@ -54,13 +54,15 @@ GRANT UNLIMITED TABLESPACE TO MYSH;
 
 ### Copy tables from sample SH schema
 
-Continue the connection as user `admin` and perform the following statements to copy table `CHANNELS` and `SALES`.
+Continue the connection as user `admin` and perform the following statements to copy table `COUNTRIES`, `CHANNELS` and `SALES`.
 
 ```sql
 create table MYSH.CHANNELS as select * from SH.CHANNELS;
+create table MYSH.COUNTRIES as select * from SH.COUNTRIES;
 create table MYSH.SALES as select * from SH.SALES;
 
 select count(1) from MYSH.CHANNELS;
+select count(1) from MYSH.COUNTRIES;
 select count(1) from MYSH.SALES;
 ```
 
@@ -69,12 +71,17 @@ select count(1) from MYSH.SALES;
 Connect to the ADB 19c instance as the `MYSH` user. Perform the following statements to simulate some workload.
 
 ```sql
+select count(1) from COUNTRIES;
 select count(1) from channels;
 select count(1) from sales;
+select * from countries;
 select * from channels;
 select * from channels where channel_id = 3;
 select * from sales where cust_id = 512 and prod_id = 119;
-insert into channels values(1, 'Sample 1 desc', 'Sample 1 class', 11, 'Channel total', 1);
+insert into channels (CHANNEL_ID, CHANNEL_DESC, CHANNEL_CLASS, CHANNEL_CLASS_ID, CHANNEL_TOTAL, CHANNEL_TOTAL_ID) values(1, 'Sample 1 desc', 'Sample 1 class', 11, 'Channel total', 1);
+update channels set CHANNEL_DESC='New desc' where CHANNEL_ID=1;
+delete from channels where channel_id = 3;
+commit;
 ```
 
 ### Create STS
@@ -97,7 +104,7 @@ EXEC DBMS_SQLTUNE.DROP_SQLSET('mysh_sts_test');
 
 Following is a sample of how to filter, select and populate the SQL Tuning Set. Please pay attention to the filter part, because it controls what kind of SQL statements will be captured into the tuning set. 
 
-According to my filter, I filtered out the SQL Tuning Set related statements and only capture `SELECT` clauses. That means the insert statement I perform above should not be captured. We will verify this later.
+According to my filter, I only filtered out the SQL Tuning Set related statements. That means all the `SELECT`, `UPDATE`, `DELETE` and `INSERT` statements I performed above should also be captured.
 
 ```sql
 DECLARE
@@ -109,7 +116,6 @@ BEGIN
         basic_filter=> 'upper(SQL_TEXT) not like ''%SQL_ANALYZE%''
         and upper(SQL_TEXT) not like ''%BEGIN%''
         and upper(SQL_TEXT) not like ''%DBMS_SQLTUNE%''
-        and upper(SQL_TEXT) like ''%SELECT%''
         and upper(parsing_schema_name) = ''MYSH''',
         attribute_list => 'ALL')) a;
     DBMS_SQLTUNE.load_sqlset(sqlset_name=>
@@ -130,7 +136,7 @@ ORDER BY 1
 ;
 ```
 
-![19c-list-sts-statements](./images/19c-list-sts-statements.png)
+![19c-list-sts-statements](./images/19c-captured-sts-statements.png)
 
 Until now, the capture SQL Tuning Set part is completed. We simulated some SQL statements as a general workload. Then we filtered the specific statements we want to analyze and populated them into the tuning set. What we need to do next is transfer the STS to the ADB 21c instance which is our test environment.
 
@@ -185,7 +191,7 @@ Let's have a quick check of the staging table, we should be able to see 6 unique
 select distinct(sql_id) from MYSH.STG_TABLE order by 1;
 ```
 
-![19c-query-sql-in-staging-table](./images/19c-query-sql-in-staging-table.png)
+![19c-query-sql-in-staging-table](./images/19c-captured-sts-statements.png)
 
 ### Create credential in ADB 19c
 
@@ -262,7 +268,7 @@ Exit from the sqlplus, perform the following statements to import the dump file.
 impdp admin/<PASSWORD>@rexadb21_high \
     directory=data_pump_dir \
     credential=REX_CRED \
-    dumpfile= https://objectstorage.ap-tokyo-1.oraclecloud.com/n/<COMPARTMENT>/b/<BUCKET>/o/mysh_sts_19cdmp \
+    dumpfile= https://objectstorage.ap-tokyo-1.oraclecloud.com/n/<COMPARTMENT>/b/<BUCKET>/o/mysh_sts_19c.dmp \
     parallel=2 \
     encryption_pwd_prompt=yes \
     transform=segment_attributes:n \
@@ -328,7 +334,7 @@ END;
 We want to see if there are any SQL errors in the 21c environment, so I will drop the `CHANNELS` table to generate a man-made SQL error.
 
 ```sql
-DROP TABLE MYSH.CHANNELS PURGE;
+DROP TABLE MYSH.COUNTRIES PURGE;
 ```
 
 ### Execute analysis task - 21c
@@ -388,7 +394,7 @@ SPOOL OFF
 
 Review the report in a browser.
 
-![21c-report](./images/21c-report.png)
+![21c-report-13sql](./images/21c-report-13sql.png)
 
 ## Clean up
 
@@ -405,7 +411,7 @@ select description, created, owner
 from DBA_SQLSET_REFERENCES
 where sqlset_name = 'mysh_sts_test';
 
-EXEC DBMS_SQLTUNE.DROP_TUNING_TASK('TASK_33');
+EXEC DBMS_SQLTUNE.DROP_TUNING_TASK('TASK_53');
 
 EXEC DBMS_SQLTUNE.DROP_SQLSET('mysh_sts_test');
 ```
@@ -417,6 +423,35 @@ SELECT COUNT(*)
 FROM   USER_SQLSET 
 WHERE  NAME = 'mysh_sts_test';
 ```
+
+## Supplement
+
+In the example above we did not do much filter against the SQL statements. If we want to filter out a specific type of SQL statements, for example `SELECT`, we can do it like below.
+
+```sql
+DECLARE
+    l_cursor  DBMS_SQLTUNE.sqlset_cursor;
+BEGIN
+    OPEN l_cursor FOR
+    SELECT VALUE(a) FROM   TABLE(
+        DBMS_SQLTUNE.select_cursor_cache(
+        basic_filter=> 'upper(SQL_TEXT) not like
+        ''%SQL_ANALYZE%''
+        and upper(SQL_TEXT) not like ''%BEGIN%''
+        and upper(SQL_TEXT) not like ''%DBMS_SQLTUNE%''
+        and upper(SQL_TEXT) like ''%SELECT%''
+        and upper(parsing_schema_name) = ''MYSH''',
+        attribute_list => 'ALL')) a;
+    DBMS_SQLTUNE.load_sqlset(sqlset_name=>
+        'mysh_sts_test',populate_cursor => l_cursor);
+END;
+/
+```
+
+Accordingly, we will only capture the `SELECT` statements into the SQL Tuning Set and only the captured `SELECT` statements will be analyzed and evaluated in the report. 
+
+![21c-report](./images/21c-report.png)
+
 
 ## References
 
