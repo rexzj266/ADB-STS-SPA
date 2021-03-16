@@ -299,7 +299,7 @@ If you encounter the error `ORA-13757`, please refer to the section [Clean up](#
 
 ### Create SPA task
 
-Before we start to analyze the SQL Tuning Set, we need to create a SQL Perform Analyzer task first.
+Before we start to analyze the SQL Tuning Set, we need to create a SQL Performance Analyzer task first.
 
 ```sql
 VARIABLE spa_task VARCHAR2(64);
@@ -325,7 +325,7 @@ END;
 
 ### Simulate a SQL error
 
-We want to see if there are any SQL error in the 21c environment, so I will drop the `CHANNELS` table to generate a man-made SQL error.
+We want to see if there are any SQL errors in the 21c environment, so I will drop the `CHANNELS` table to generate a man-made SQL error.
 
 ```sql
 DROP TABLE MYSH.CHANNELS PURGE;
