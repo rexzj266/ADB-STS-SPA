@@ -38,7 +38,7 @@ There are some preparations we need to do before we start the real work. Because
 
 ## Capture SQL Tuning Set
 
-Once we have completed the preparation works, we can start to capture the STS in the ADB 19c instance. In this example, I will create a schema called `MYSH` and copy two tables `CHANNELS` and `SALES` from the ADB built-in sample schema `SH`. Then I will perform some super easy SQL statements against these two tables and capture them into the STS. 
+Once we have completed the preparation works, we can start to capture the STS in the ADB 19c instance. In this example, I will create a schema called `MYSH` and copy tables `COUNTRIES`, `CHANNELS` and `SALES` from the ADB built-in sample schema `SH`. Then I will perform some super easy SQL statements against these tables and capture them into the STS. 
 
 In the real production environment, you may need to consider which schema and which SQL statements should be captured and evaluated.
 
