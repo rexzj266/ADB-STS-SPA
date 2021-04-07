@@ -185,7 +185,7 @@ END;
 
 ![19c-pack-staging-table](./images/19c-pack-staging-table.png)
 
-ステージングテーブルを簡単に確認してみましょう。この例では、6つの一意の `sql_id`を確認できるはずです。
+ステージングテーブルを簡単に確認してみましょう。この例では、13個の一意の `sql_id`を確認できるはずです。
 
 ```sql
 select distinct(sql_id) from MYSH.STG_TABLE order by 1;
