@@ -137,8 +137,6 @@ ORDER BY 1
 ;
 ```
 
-![19c-list-sts-statements](./images/19c-captured-sts-statements.png)
-
 これまでに、SQL Tuning Setのキャプチャは完了しました。 一般的なワークロードとしていくつかのSQLステートメントをシミュレートしました。 分析する特定のステートメントをフィルタリングして、チューニングセットに入力しました。 次に行う必要なのは、STSをテスト環境であるADB 21cインスタンスに転送することです。
 
 ## STSの転送
