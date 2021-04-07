@@ -136,8 +136,6 @@ ORDER BY 1
 ;
 ```
 
-![19c-list-sts-statements](./images/19c-captured-sts-statements.png)
-
 Until now, the capture SQL Tuning Set part is completed. We simulated some SQL statements as a general workload. Then we filtered the specific statements we want to analyze and populated them into the tuning set. What we need to do next is transfer the STS to the ADB 21c instance which is our test environment.
 
 ## Transfer STS
