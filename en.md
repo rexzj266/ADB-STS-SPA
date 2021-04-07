@@ -183,7 +183,7 @@ END;
 
 ![19c-pack-staging-table](./images/19c-pack-staging-table.png)
 
-Let's have a quick check of the staging table, we should be able to see 6 unique `sql_id` in this example.
+Let's have a quick check of the staging table, we should be able to see 13 unique `sql_id` in this example.
 
 ```sql
 select distinct(sql_id) from MYSH.STG_TABLE order by 1;
